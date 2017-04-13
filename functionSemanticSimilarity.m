@@ -1,9 +1,4 @@
-
-for expIter = 1:5
-    
-    clc;
-    clear
-    close all;
+function meanAcc = functionSemanticSimilarity(expIter, addPath)
     
     % 1: Linux Laptop, 2: Windows laptop, 3: Linux Desktop 4: Windows Desktop
     SYSTEM_PLATFORM = 4;
@@ -11,7 +6,7 @@ for expIter = 1:5
     listDatasets = {'AwA', 'Pascal-Yahoo'};
     DATASET = listDatasets{1};
     
-    BASE_PATH = functionSemantic_similaity_env_setup(SYSTEM_PLATFORM);
+    BASE_PATH = functionSemantic_similaity_env_setup(SYSTEM_PLATFORM, addPath);
     
     %% START >> Load data
     if 1
@@ -21,11 +16,15 @@ for expIter = 1:5
             %temp = load(sprintf('%s/data/code-data/semantic-similarity/cnn-features/AwA/feat-imagenet-vgg-verydeep-19.mat', BASE_PATH));
             temp = load(sprintf('%s/AwA_All_vgg19Features.mat', dataset_path));
             vggFeatures = temp.vggFeatures;
-            attributes = load(sprintf('%s/AwA_All_ClassLabelPhraseDict.mat', dataset_path));
             temp = load(sprintf('%s/AwA_All_DatasetLabels.mat', dataset_path));
             datasetLabels = temp.datasetLabels;
             vggFeatures = vggFeatures';
-            attributes = attributes.phrasevec_mat';
+            %Use word2vec
+            attributesData = load(sprintf('%s/AwA_All_ClassLabelPhraseDict.mat', dataset_path));
+            attributes = attributesData.phrasevec_mat';
+            %Use continuous attributes
+            %attributesData = load(sprintf('%s/data/code-data/semantic-similarity/cnn-features/AwA/predicateMatrixContinuous.mat', BASE_PATH));
+            %attributes = single(attributesData.predicateMatrixContinuous');
             NUMBER_OF_CLASSES = 50;
             %Default setting of AwA
             %defaultTrainClassLabels = [1:7, 9:16, 18:21, 23, 25, 27:32, 35:36, 39, 41:50];
@@ -53,7 +52,7 @@ for expIter = 1:5
     
     
     %% Start >> Clustering of data
-    numberOfClusters = 3;
+    numberOfClusters = 1;
     clusteringModel = functionClusterData(vggFeatures, datasetLabels, numberOfClusters, NUMBER_OF_CLASSES);
     %% End >> Clustering of data
     
@@ -147,7 +146,7 @@ for expIter = 1:5
                 %%% gradient
                 grad = zeros(length(w), size(alpha,1));
                 for i = 1:length(train_id)
-                    %         d = min(repmat(cnn_feat(:,train_id(i)), [1 size(Templates,2)]), Templates);
+                    %d = min(repmat(vggFeatures(:,train_id(i)), [1 size(Templates,2)]), Templates);
                     d = max(0, repmat(vggFeatures(:,train_id(i)), [1 size(Templates,2)])-Templates);
                     val = (w' * d) * alpha;
                     y = -ones(1, size(alpha,2));
@@ -165,7 +164,7 @@ for expIter = 1:5
                 %%% sample data
                 x = zeros(4096, length(trainClassLabels), length(trainClassLabels), 'single');
                 for i = 1:length(train_id)
-                    %         d = min(repmat(cnn_feat(:,train_id(i)), [1 size(Templates,2)]), Templates);
+                    %d = min(repmat(vggFeatures(:,train_id(i)), [1 size(Templates,2)]), Templates);
                     d = max(0, repmat(vggFeatures(:,train_id(i)), [1 size(Templates,2)])-Templates);
                     x(:,:,datasetLabels(train_id(i))==trainClassLabels) = x(:,:,datasetLabels(train_id(i))==trainClassLabels) + single(d*alpha(:,trainClassLabels));
                 end
@@ -243,8 +242,6 @@ for expIter = 1:5
     results.accuracy = meanAcc;
     results.numberOfClusters = numberOfClusters;
     results.numberOfValidClusters = numberOfValidClusters;
-    save(sprintf('%s/data/code-data/semantic-similarity/results/results_itr_%d_AwA_clstrs_%d.mat', ...
-        BASE_PATH, expIter, numberOfClusters), 'results');
+    %save(sprintf('%s/data/code-data/semantic-similarity/results/results_itr_%d_apy_clstrs_%d.mat', ...
+    %    BASE_PATH, expIter, numberOfClusters), 'results');
     %% END >> Save results
-    
-end % Exp iterations
