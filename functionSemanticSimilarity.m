@@ -1,7 +1,7 @@
 function meanAcc = functionSemanticSimilarity(expIter, addPath)
     
     % 1: Linux Laptop, 2: Windows laptop, 3: Linux Desktop 4: Windows Desktop
-    SYSTEM_PLATFORM = 4;
+    SYSTEM_PLATFORM = 1;
     BASE_PATH = '';
     listDatasets = {'AwA', 'Pascal-Yahoo'};
     DATASET = listDatasets{1};

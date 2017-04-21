@@ -2,8 +2,14 @@
 clear 
 clc
 close all
-
-dataset_path = 'E:\omkar-work\study\data\code-data\semantic-similarity\cnn-features\AwA\';
+% 1: Linux Laptop, 2: Windows laptop, 3: Linux Desktop 4: Windows Desktop
+    SYSTEM_PLATFORM = 1;
+    BASE_PATH = '';
+    listDatasets = {'AwA', 'Pascal-Yahoo'};
+    DATASET = listDatasets{1};
+    addPath = 1;
+    BASE_PATH = functionSemantic_similaity_env_setup(SYSTEM_PLATFORM, addPath);
+dataset_path = sprintf('%s/data/code-data/semantic-similarity/cnn-features/AwA/', BASE_PATH);;
 
 load(sprintf('%s/classes.mat', dataset_path));
 load(sprintf('%s/predicateMatrixContinuous.mat', dataset_path));     % better
@@ -160,7 +166,7 @@ parfor i = 1:length(train_labels)
     d = d*(repmat(alpha(:,train_labels(i)), [1 Ns])-alpha(:,cid)) ...
         ./repmat(1-B(train_labels(i), cid), [size(d,1) 1]);
     mySaveSVMData(sprintf('%s/tmp/svm_train_data/%d.mat', dataset_path, i), d);
-    x = [x, d];
+    %x = [x, d];
     i;
 end
 

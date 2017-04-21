@@ -1,5 +1,5 @@
 
-for expIter = 1:5
+for expIter = 1:1
     
     clc;
     clear
@@ -53,7 +53,7 @@ for expIter = 1:5
     
     
     %% Start >> Clustering of data
-    numberOfClusters = 3;
+    numberOfClusters = 1;
     clusteringModel = functionClusterData(vggFeatures, datasetLabels, numberOfClusters, NUMBER_OF_CLASSES);
     %% End >> Clustering of data
     
