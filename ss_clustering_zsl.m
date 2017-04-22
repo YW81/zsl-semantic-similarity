@@ -9,13 +9,13 @@ BASE_PATH = '';
 listDatasets = {'AwA', 'Pascal-Yahoo'};
 DATASET = listDatasets{2};
 %Enable/add required tool boxes
-addPath = 1;
+addPath = 0;
 BASE_PATH = functionSemantic_similaity_env_setup(SYSTEM_PLATFORM, addPath);
 
 %% START >> Load data
 if 1
     if(strcmp(DATASET, 'AwA'))
-        dataset_path = sprintf('%s/data/code-data/semantic-similarity/precomputed-features-AwA/', BASE_PATH);
+        dataset_path = sprintf('%s/data/cclass_attributesode-data/semantic-similarity/precomputed-features-AwA/', BASE_PATH);
         %'data/code-data/semantic-similarity/cnn-features
         %temp = load(sprintf('%s/data/code-data/semantic-similarity/cnn-features/AwA/feat-imagenet-vgg-verydeep-19.mat', BASE_PATH));
         temp = load(sprintf('%s/AwA_All_vgg19Features.mat', dataset_path));
@@ -58,7 +58,7 @@ labels(defaultTestClassLabels) = 1;
 labels = 1. - labels;
 defaultTrainClassLabels = find(labels);
 
-leaveKOut = 5000;
+leaveKOut = 1000;
 mappedAllAttributes = [];
 mappedAllAttributeLabels = [];
 
@@ -66,16 +66,27 @@ mappedAllAttributeLabels = [];
 %**********************************************************
 %**********************************************************
 %reducing dimension of attribute vectors for faster processing
-attributes = attributes(1:30, :);
+%attributes = attributes(1:30, :);
 %**********************************************************
 %Select kernels from the following
 listOfKernelTypes = {'chisq', 'cosine', 'linear', 'rbf', 'rbfchisq'};
-kernelType = listOfKernelTypes{1};
-kernelData = functionGetKernel(BASE_PATH, vggFeatures', kernelType);
-kernelData = ones(size(vggFeatures, 2), size(vggFeatures, 2));
+kernelType = listOfKernelTypes{3};
+%Get training class features
+vggFeaturesTraining = [];
+labelsTrainingData = [];
 
-for ind = 1:1%length(datasetLabels) - leaveKOut;
-    leaveOutDatasetLabels = datasetLabels;
+for classInd = 1:length(defaultTrainClassLabels)
+    tmp = (datasetLabels == defaultTrainClassLabels(classInd));
+    vggFeaturesTraining = [vggFeaturesTraining vggFeatures(:, find(tmp))];
+    labelsTrainingData = [labelsTrainingData; defaultTrainClassLabels(classInd) * ones(sum(tmp), 1)];
+end
+
+temp = functionGetKernel(BASE_PATH, vggFeaturesTraining', kernelType, dataset_path);
+%kernelData = ones(size(vggFeatures, 2), size(vggFeatures, 2));
+kernelData = temp.outKernel;
+
+for ind = 1:length(datasetLabels) - leaveKOut;
+    leaveOutDatasetLabels = labelsTrainingData;
     %Assign 0 label for left out samples
     leaveOutDatasetLabels((ind - 1)*leaveKOut + 1 : (ind - 1)*leaveKOut + leaveKOut) = 0;
     %Find array of 0-1 in which 0 corresponds to left out sample
@@ -90,8 +101,8 @@ for ind = 1:1%length(datasetLabels) - leaveKOut;
     attributesMat = [];
     mappedAttributeLabels = [];
     
-    for c_tr = 1:NUMBER_OF_CLASSES
-        % Extract Training Features for each class
+    for c_tr = 1:length(defaultTrainClassLabels)
+        % Extract Features for each train class
         % temp.currentClassName = Data.ClassLabelsPhrase{Para.idx_TrainingSet(c_tr)};
         numberOfSamplesOfClass = sum(leaveOutDatasetLabels==c_tr);
         attributesMat = [attributesMat; repmat(attributes(:, c_tr)', numberOfSamplesOfClass, 1)];

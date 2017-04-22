@@ -23,7 +23,7 @@
 function outMappedVectors = functionTrainRegressor(inData, inDatasetLabels, inAttributes, inBASE_PATH)
 addpath(genpath(sprintf('%s/codes/matlab-stuff/tree-based-zsl', inBASE_PATH)));
 
-kernelData = 1 - inData;
+kernelData = 1 - double(inData);
 Data.D_tr = kernelData;%(Data.tr_sample_ind, Data.tr_sample_ind);
 Data.D_ts = kernelData;%(Data.ts_sample_ind, Data.tr_sample_ind);
 
@@ -35,7 +35,7 @@ Data.D_ts = exp(- Data.D_ts/temp.A);
 
 temp.SS = sum(inAttributes.^2,2);
 temp.label_k = sqrt(size(inAttributes,2)./temp.SS);
-attributes = repmat(temp.label_k, 1, size(inAttributes,2)) .* inAttributes;
+attributes = double(repmat(temp.label_k, 1, size(inAttributes,2)) .* inAttributes);
 
 % Training Support Vector Regression model for each dimension
 % Parameters

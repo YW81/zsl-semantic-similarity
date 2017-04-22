@@ -11,17 +11,16 @@
 % kernel:
 % Kernel computed from the data
 
-function outKernel = functionGetKernel(inBASE_PATH, inData, inKernelType)
+function outKernel = functionGetKernel(inBASE_PATH, inData, inKernelType, inDatasetPath)
 
 % Precompute Kernel Matrix
 % Suggest precompute chi2 kernel and save it for re-training model
 addpath(genpath(sprintf('%s/codes/matlab-stuff/tree-based-zsl', inBASE_PATH)));
 DIR = '/nfs4/omkar/Documents/study/phd-research/codes/matlab-stuff/tree-based-zsl/Demo/Data/AwA/';
 
-if 0%exist(fullfile(DIR, 'Chi2Kernel.mat'),'file')
+if exist(fullfile(inDatasetPath, 'linear_kernel_apy_train_dataset_vgg.mat'),'file')
     %%% Exist precomputed chi2 kernel
-    temp = load(strcat(DIR, 'Chi2Kernel.mat'));
-    kernel = temp.Data.D;
+    outKernel = load(strcat(inDatasetPath, 'linear_kernel_apy_train_dataset_vgg.mat'));
 else
     %%% Doesn't exist precomputed chi2 kernel
     features = [];
@@ -38,4 +37,6 @@ else
     %% Compute Chi2 Kernel
     %   it may take long time to compute Chi2 kernel
     outKernel = func_PrecomputeKernel(features, features, inKernelType);
+    save(sprintf('%s/linear_kernel_apy_train_dataset_vgg.mat', inDatasetPath), 'outKernel');
+
 end
