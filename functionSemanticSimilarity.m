@@ -1,10 +1,10 @@
 function meanAcc = functionSemanticSimilarity(expIter, addPath)
     
     % 1: Linux Laptop, 2: Windows laptop, 3: Linux Desktop 4: Windows Desktop
-    SYSTEM_PLATFORM = 1;
+    SYSTEM_PLATFORM = 3;
     BASE_PATH = '';
     listDatasets = {'AwA', 'Pascal-Yahoo'};
-    DATASET = listDatasets{1};
+    DATASET = listDatasets{2};
     
     BASE_PATH = functionSemantic_similaity_env_setup(SYSTEM_PLATFORM, addPath);
     
@@ -50,17 +50,18 @@ function meanAcc = functionSemanticSimilarity(expIter, addPath)
     end
     %% END >> Load data
     
-    
-    %% Start >> Clustering of data
-    numberOfClusters = 1;
-    clusteringModel = functionClusterData(vggFeatures, datasetLabels, numberOfClusters, NUMBER_OF_CLASSES);
-    %% End >> Clustering of data
-    
     k=1;
     labels = zeros(1, NUMBER_OF_CLASSES);
     labels(defaultTestClassLabels) = 1;
     labels = 1. - labels;
     defaultTrainClassLabels = find(labels);
+    
+    %% Start >> Clustering of data
+    numberOfClusters = 1;
+    clusteringModel = functionClusterData(vggFeatures, datasetLabels, numberOfClusters, length(defaultTrainClassLabels), defaultTrainClassLabels);
+    %% End >> Clustering of data
+    
+    
     % clusterInfo.trainTestClasses = zeros(NUMBER_OF_CLASSES, 2*numberOfClusters);
     
     %% START >> Training

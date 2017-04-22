@@ -3,11 +3,14 @@ clc;
 clear
 close all;
 
-% 1: Linux Laptop, 2: Windows laptop, 3: Linux Desktop 4: Windows Desktop
-SYSTEM_PLATFORM = 1;
+% 1: Linux Laptop 
+% 2: Windows laptop 
+% 3: Linux Desktop 
+% 4: Windows Desktop
+SYSTEM_PLATFORM = 3;
 BASE_PATH = '';
 listDatasets = {'AwA', 'Pascal-Yahoo'};
-DATASET = listDatasets{2};
+DATASET = listDatasets{1};
 %Enable/add required tool boxes
 addPath = 0;
 BASE_PATH = functionSemantic_similaity_env_setup(SYSTEM_PLATFORM, addPath);
@@ -15,7 +18,7 @@ BASE_PATH = functionSemantic_similaity_env_setup(SYSTEM_PLATFORM, addPath);
 %% START >> Load data
 if 1
     if(strcmp(DATASET, 'AwA'))
-        dataset_path = sprintf('%s/data/cclass_attributesode-data/semantic-similarity/precomputed-features-AwA/', BASE_PATH);
+        dataset_path = sprintf('%s/data/code-data/semantic-similarity/precomputed-features-AwA/', BASE_PATH);
         %'data/code-data/semantic-similarity/cnn-features
         %temp = load(sprintf('%s/data/code-data/semantic-similarity/cnn-features/AwA/feat-imagenet-vgg-verydeep-19.mat', BASE_PATH));
         temp = load(sprintf('%s/AwA_All_vgg19Features.mat', dataset_path));
@@ -52,13 +55,13 @@ end
 
 
 %% Start >> Clustering of data
-numberOfClusters = 1;
+numberOfClusters = 2;
 labels = zeros(1, NUMBER_OF_CLASSES);
 labels(defaultTestClassLabels) = 1;
 labels = 1. - labels;
 defaultTrainClassLabels = find(labels);
 
-leaveKOut = 1000;
+leaveKOut = 1;
 mappedAllAttributes = [];
 mappedAllAttributeLabels = [];
 
@@ -81,11 +84,11 @@ for classInd = 1:length(defaultTrainClassLabels)
     labelsTrainingData = [labelsTrainingData; defaultTrainClassLabels(classInd) * ones(sum(tmp), 1)];
 end
 
-temp = functionGetKernel(BASE_PATH, vggFeaturesTraining', kernelType, dataset_path);
+kernelData = functionGetKernel(BASE_PATH, vggFeaturesTraining', kernelType, dataset_path);
 %kernelData = ones(size(vggFeatures, 2), size(vggFeatures, 2));
-kernelData = temp.outKernel;
 
-for ind = 1:length(datasetLabels) - leaveKOut;
+if 1
+for ind = 1:1%length(datasetLabels) - leaveKOut;
     leaveOutDatasetLabels = labelsTrainingData;
     %Assign 0 label for left out samples
     leaveOutDatasetLabels((ind - 1)*leaveKOut + 1 : (ind - 1)*leaveKOut + leaveKOut) = 0;
@@ -104,10 +107,10 @@ for ind = 1:length(datasetLabels) - leaveKOut;
     for c_tr = 1:length(defaultTrainClassLabels)
         % Extract Features for each train class
         % temp.currentClassName = Data.ClassLabelsPhrase{Para.idx_TrainingSet(c_tr)};
-        numberOfSamplesOfClass = sum(leaveOutDatasetLabels==c_tr);
-        attributesMat = [attributesMat; repmat(attributes(:, c_tr)', numberOfSamplesOfClass, 1)];
+        numberOfSamplesOfClass = sum(leaveOutDatasetLabels==defaultTrainClassLabels(c_tr));
+        attributesMat = [attributesMat; repmat(attributes(:, defaultTrainClassLabels(c_tr))', numberOfSamplesOfClass, 1)];
         %tr_sample_ind = tr_sample_ind + tr_sample_class_ind;
-        mappedAttributeLabels = [mappedAttributeLabels; c_tr * ones(numberOfSamplesOfClass, 1)];
+        mappedAttributeLabels = [mappedAttributeLabels; defaultTrainClassLabels(c_tr) * ones(numberOfSamplesOfClass, 1)];
     end
     
     %Train regressor
@@ -119,9 +122,19 @@ for ind = 1:length(datasetLabels) - leaveKOut;
     leaveOutData = [];
     attributesMat = [];
     mappedAttributeLabels = [];
+    save(sprintf('%s/awa_mappedAllAttributes.mat',dataset_path), 'mappedAllAttributes');
+    save(sprintf('%s/awa_mappedAllAttributeLabels.mat',dataset_path), 'mappedAllAttributeLabels');
+
+end
+else
+   temp1 = load(sprintf('%s/awa_mappedAllAttributes.mat',dataset_path));
+   mappedAllAttributes = temp1.mappedAllAttributes;
+   temp2 = load(sprintf('%s/awa_mappedAllAttributeLabels.mat',dataset_path));
+   mappedAllAttributeLabels = temp2.mappedAllAttributeLabels;
 end
 
-ssCluteringModel = functionClusterData(mappedAllAttributes, mappedAllAttributeLabels, numberOfClusters, NUMBER_OF_CLASSES);
+ssClusteringModel = functionClusterData(mappedAllAttributes', mappedAllAttributeLabels, ...
+            numberOfClusters, length(defaultTrainClassLabels), defaultTrainClassLabels);
 %% End >> Clustering of data
 
 k=1;
@@ -133,7 +146,7 @@ validClusterIndex = 1;
 validClusterIndices = [];
 
 for clusterIndex = 1:numberOfClusters
-    allClassesInCluster = find(clusteringModel.classClusterAssignment(:, 1) == clusterIndex);
+    allClassesInCluster = find(ssClusteringModel.classClusterAssignment(:, 1) == clusterIndex);
     trainClassIndex = find(ismember(defaultTrainClassLabels, allClassesInCluster));
     %testClassIndex = defaultTestClassLabels; %find(ismember(defaultTestClassLabels, allClassesInCluster));
     trainClassLabels = defaultTrainClassLabels(trainClassIndex);
@@ -268,24 +281,27 @@ margins = [];
 test_id = find(ismember(datasetLabels, testClassLabels));
 
 for i = 1:length(test_id)
-    %     d = min(repmat(cnn_feat(:,test_id(i)), [1 size(Templates,2)]), Templates);
+    
     %Find the cluster to which test sample belongs
-    tmp = clusteringModel.clusterCenters;
-    clusterCenters = tmp(:, validClusterIndices);
-    distMat =  clusterCenters - repmat(vggFeatures(:,test_id(i)), 1, numberOfValidClusters);
+    %tmp = ssClusteringModel.clusterCenters;
+    %clusterCenters = tmp(:, validClusterIndices);
+    %distMat =  clusterCenters - repmat(vggFeatures(:,test_id(i)), 1, numberOfValidClusters);
     %[distance clusterAssignment] = min(sqrt(sum(distMat.^2, 1)));
-    distance = sqrt(sum(distMat.^2, 1));
-    distance = distance./sum(distance);
-    weighted_d = 0;
+    %distance = sqrt(sum(distMat.^2, 1));
+    %distance = distance./sum(distance);
+    %weighted_d = 0;
+    scoresAcrossClusters = [];
     for clusterIndex = 1:numberOfValidClusters
         Templates = clusterInfo(clusterIndex).Templates;
         w = clusterInfo(clusterIndex).w;
         alpha = clusterInfo(clusterIndex).alpha;
         d = max(0, repmat(vggFeatures(:,test_id(i)), [1 size(Templates,2)])- Templates);
         d = w' * d * alpha(:,testClassLabels);
-        weighted_d = weighted_d + d * distance(clusterIndex);
+        %weighted_d = weighted_d + d * distance(clusterIndex);
+        scoresAcrossClusters = [scoresAcrossClusters; d];
     end
-    margins = [margins; weighted_d];
+    
+    margins = [margins; max(scoresAcrossClusters, [], 1)];%weighted_d];
 end
 %%% classify
 [margin id] = max(margins, [], 2);
@@ -306,7 +322,7 @@ results.clusterInfo = clusterInfo;
 results.accuracy = meanAcc;
 results.numberOfClusters = numberOfClusters;
 results.numberOfValidClusters = numberOfValidClusters;
-save(sprintf('%s/data/code-data/semantic-similarity/results/results_itr_%d_AwA_clstrs_%d.mat', ...
-    BASE_PATH, expIter, numberOfClusters), 'results');
+%save(sprintf('%s/data/code-data/semantic-similarity/results/results_itr_%d_AwA_clstrs_%d.mat', ...
+%    BASE_PATH, expIter, numberOfClusters), 'results');
 %% END >> Save results
 

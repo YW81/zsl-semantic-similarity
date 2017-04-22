@@ -4,7 +4,7 @@ clear all
 clc
 
 sum = 0;
-addPath = 1;
+addPath = 0;
 for expIter = 1:1
     accuracy = functionSemanticSimilarity(expIter, addPath);
     sum = sum + accuracy;
