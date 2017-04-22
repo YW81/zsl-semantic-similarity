@@ -7,7 +7,7 @@ close all;
 SYSTEM_PLATFORM = 1;
 BASE_PATH = '';
 listDatasets = {'AwA', 'Pascal-Yahoo'};
-DATASET = listDatasets{1};
+DATASET = listDatasets{2};
 %Enable/add required tool boxes
 addPath = 1;
 BASE_PATH = functionSemantic_similaity_env_setup(SYSTEM_PLATFORM, addPath);
@@ -58,7 +58,7 @@ labels(defaultTestClassLabels) = 1;
 labels = 1. - labels;
 defaultTrainClassLabels = find(labels);
 
-leaveKOut = 1;%29000;
+leaveKOut = 5000;
 mappedAllAttributes = [];
 mappedAllAttributeLabels = [];
 
@@ -68,6 +68,11 @@ mappedAllAttributeLabels = [];
 %reducing dimension of attribute vectors for faster processing
 attributes = attributes(1:30, :);
 %**********************************************************
+%Select kernels from the following
+listOfKernelTypes = {'chisq', 'cosine', 'linear', 'rbf', 'rbfchisq'};
+kernelType = listOfKernelTypes{1};
+kernelData = functionGetKernel(BASE_PATH, vggFeatures', kernelType);
+kernelData = ones(size(vggFeatures, 2), size(vggFeatures, 2));
 
 for ind = 1:1%length(datasetLabels) - leaveKOut;
     leaveOutDatasetLabels = datasetLabels;
@@ -78,7 +83,8 @@ for ind = 1:1%length(datasetLabels) - leaveKOut;
     %create new labels array contianing only non-left-out samples
     leaveOutDatasetLabels = leaveOutDatasetLabels(tempB == 1);
     %create new data contianing only non-left-out samples
-    leaveOutData = vggFeatures(:,find(tempB == 1));
+    %leaveOutData = vggFeatures(:,find(tempB == 1));
+    leaveOutData = kernelData(tempB, tempB);
     %Prepare attribute matrix which contains attribute vec for each data
     %point in leaveOutData
     attributesMat = [];

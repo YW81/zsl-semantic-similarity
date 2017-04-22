@@ -21,13 +21,9 @@
 % Mapped input data using learned SVM regressor.
 
 function outMappedVectors = functionTrainRegressor(inData, inDatasetLabels, inAttributes, inBASE_PATH)
+addpath(genpath(sprintf('%s/codes/matlab-stuff/tree-based-zsl', inBASE_PATH)));
 
-%Select kernels from the following
-listOfKernelTypes = {'chisq', 'cosine', 'linear', 'rbf', 'rbfchisq'};
-kernelType = listOfKernelTypes{1};
-kernelData = functionGetKernel(inBASE_PATH, inData, kernelType);
-
-kernelData = 1 - kernelData;
+kernelData = 1 - inData;
 Data.D_tr = kernelData;%(Data.tr_sample_ind, Data.tr_sample_ind);
 Data.D_ts = kernelData;%(Data.ts_sample_ind, Data.tr_sample_ind);
 

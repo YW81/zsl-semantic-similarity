@@ -233,8 +233,7 @@ for expIter = 1:1
     acc(k) = sum(a == b)/length(test_id)
     k=k+1;
     margins = [];
-    meanAcc = mean(acc)
-    
+    meanAcc = mean(acc)    
     %% END >> Testing
     
     
